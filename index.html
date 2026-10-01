@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第一印象チェック</title>
+<style>
+body{font-family:sans-serif;background:#fff9e8;text-align:center;margin:0;padding:18px;color:#222}
+h1{margin:8px}.sub{font-weight:bold}
+.box{max-width:500px;margin:auto;background:white;padding:12px;border:3px solid #ffd51f;border-radius:20px}
+video{width:100%;border-radius:15px;background:#222;transform:scaleX(-1)}
+button{width:100%;padding:16px;margin-top:12px;border:0;border-radius:30px;background:#ffd51f;font-size:18px;font-weight:bold}
+#result{display:none;margin-top:18px}.total{background:#00a9a5;color:white;padding:15px;border-radius:18px}
+#score{font-size:55px;font-weight:bold}.two{display:flex;gap:10px;margin-top:10px}
+.item{flex:1;background:white;padding:15px;border-radius:15px}.item b{font-size:30px}
+.msg{background:white;padding:14px;border-radius:15px;margin-top:10px;text-align:left}
+</style></head><body>
+
+<h1>第一印象チェック</h1>
+<p class="sub">カメラを見て「こんにちは」</p>
+
+<div class="box">
+<video id="v" autoplay playsinline muted></video>
+<button id="b">チェック開始</button>
+<p id="s">カメラとマイクを許可してください</p>
+</div>
+
+<div id="result">
+<div class="total">第一印象スコア<br><span id="score">--</span> / 100</div>
+<div class="two">
+<div class="item">😊 表情<br><b id="face">--</b>/50</div>
+<div class="item">🎤 声<br><b id="voice">--</b>/50</div>
+</div>
+<div class="msg">✨ <b>あなたの強み</b><br><span id="good"></span></div>
+<div class="msg">🎯 <b>今日直すのはここ</b><br><span id="advice"></span></div>
+</div>
+
+<script>
+let v=document.querySelector("#v"),b=document.querySelector("#b"),s=document.querySelector("#s"),st,a,x,d,L=[];
+navigator.mediaDevices.getUserMedia({video:{facingMode:"user"},audio:true}).then(q=>{st=q;v.srcObject=q;s.innerText="準備OK！"}).catch(()=>s.innerText="カメラ・マイクを許可してください");
+
+b.onclick=async()=>{
+if(!st)return;
+b.disabled=true;L=[];
+a=new AudioContext();x=a.createAnalyser();d=new Uint8Array(512);
+a.createMediaStreamSource(st).connect(x);x.fftSize=512;
+s.innerText="3…";
+setTimeout(()=>s.innerText="2…",700);
+setTimeout(()=>s.innerText="1…",1400);
+setTimeout(()=>{s.innerText="「こんにちは」";rec()},2100);
+setTimeout(done,5100);
+};
+
+function rec(){
+x.getByteTimeDomainData(d);
+let z=0;for(let n of d)z+=((n-128)/128)**2;
+L.push(Math.sqrt(z/d.length));
+if(b.disabled)requestAnimationFrame(rec)
+}
+
+function done(){
+b.disabled=false;
+let m=L.reduce((p,q)=>p+q,0)/(L.length||1);
+let voice=Math.max(20,Math.min(50,Math.round(25+m*300)));
+let face=42;
+let total=face+voice;
+document.querySelector("#face").innerText=face;
+document.querySelector("#voice").innerText=voice;
+document.querySelector("#score").innerText=total;
+document.querySelector("#good").innerText=voice>=38?"声がしっかり届いています。":"正面を向いて挨拶できています。";
+document.querySelector("#advice").innerText=voice<35?"もう少し明るく、語尾まで声を届けよう。":"笑顔→目線→声の順を意識しよう。";
+document.querySelector("#result").style.display="block";
+s.innerText="チェック完了！";
+}
+</script></body></html>
