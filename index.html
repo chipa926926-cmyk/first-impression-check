@@ -1,72 +1,33 @@
-<!DOCTYPE html><html lang="ja"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>第一印象チェック</title>
-<style>
-body{font-family:sans-serif;background:#fff9e8;text-align:center;margin:0;padding:18px;color:#222}
-h1{margin:8px}.sub{font-weight:bold}
-.box{max-width:500px;margin:auto;background:white;padding:12px;border:3px solid #ffd51f;border-radius:20px}
-video{width:100%;border-radius:15px;background:#222;transform:scaleX(-1)}
-button{width:100%;padding:16px;margin-top:12px;border:0;border-radius:30px;background:#ffd51f;font-size:18px;font-weight:bold}
-#result{display:none;margin-top:18px}.total{background:#00a9a5;color:white;padding:15px;border-radius:18px}
-#score{font-size:55px;font-weight:bold}.two{display:flex;gap:10px;margin-top:10px}
-.item{flex:1;background:white;padding:15px;border-radius:15px}.item b{font-size:30px}
-.msg{background:white;padding:14px;border-radius:15px;margin-top:10px;text-align:left}
+<!doctype html><html lang="ja"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>第一印象チェック</title><style>
+body{font-family:sans-serif;background:#fff9e8;text-align:center;margin:0;padding:16px;color:#222}
+h1{margin:6px}.box,.card{max-width:500px;margin:auto;background:#fff;padding:12px;border-radius:18px}
+.box{border:3px solid #ffd51f}video{width:100%;border-radius:14px;background:#222;transform:scaleX(-1)}
+button{width:100%;padding:16px;margin-top:10px;border:0;border-radius:30px;background:#ffd51f;font-size:18px;font-weight:bold}
+#r{display:none}.total{background:#00a9a5;color:white;margin:15px auto 10px;padding:15px;border-radius:18px;max-width:500px}
+#T{font-size:54px;font-weight:bold}.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:524px;margin:auto}
+.card b{font-size:28px}.detail{font-size:13px;text-align:left;line-height:1.7}.bar{height:8px;background:#eee;border-radius:9px;margin:5px 0}.bar i{display:block;height:100%;background:#00a9a5;border-radius:9px}
 </style></head><body>
-
-<h1>第一印象チェック</h1>
-<p class="sub">カメラを見て「こんにちは」</p>
-
-<div class="box">
-<video id="v" autoplay playsinline muted></video>
-<button id="b">チェック開始</button>
-<p id="s">カメラとマイクを許可してください</p>
-</div>
-
-<div id="result">
-<div class="total">第一印象スコア<br><span id="score">--</span> / 100</div>
-<div class="two">
-<div class="item">😊 表情<br><b id="face">--</b>/50</div>
-<div class="item">🎤 声<br><b id="voice">--</b>/50</div>
-</div>
-<div class="msg">✨ <b>あなたの強み</b><br><span id="good"></span></div>
-<div class="msg">🎯 <b>今日直すのはここ</b><br><span id="advice"></span></div>
-</div>
-
+<h1>第一印象チェック</h1><p>カメラを見て「こんにちは」</p>
+<div class="box"><video id="v" autoplay playsinline muted></video><button id="b">チェック開始</button><p id="s">カメラ・マイクを許可してください</p></div>
+<div id="r"><div class="total">第一印象スコア<br><span id="T">--</span>/100</div>
+<div class="grid"><div class="card">😊 表情・姿勢<br><b id="F">--</b>/50</div><div class="card">🎤 声<br><b id="V">--</b>/50</div></div>
+<div class="card detail" id="D"></div><div class="card detail" id="A"></div></div>
 <script>
-let v=document.querySelector("#v"),b=document.querySelector("#b"),s=document.querySelector("#s"),st,a,x,d,L=[];
-navigator.mediaDevices.getUserMedia({video:{facingMode:"user"},audio:true}).then(q=>{st=q;v.srcObject=q;s.innerText="準備OK！"}).catch(()=>s.innerText="カメラ・マイクを許可してください");
-
-b.onclick=async()=>{
-if(!st)return;
-b.disabled=true;L=[];
-a=new AudioContext();x=a.createAnalyser();d=new Uint8Array(512);
-a.createMediaStreamSource(st).connect(x);x.fftSize=512;
-s.innerText="3…";
-setTimeout(()=>s.innerText="2…",700);
-setTimeout(()=>s.innerText="1…",1400);
-setTimeout(()=>{s.innerText="「こんにちは」";rec()},2100);
-setTimeout(done,5100);
-};
-
-function rec(){
-x.getByteTimeDomainData(d);
-let z=0;for(let n of d)z+=((n-128)/128)**2;
-L.push(Math.sqrt(z/d.length));
-if(b.disabled)requestAnimationFrame(rec)
-}
-
-function done(){
-b.disabled=false;
-let m=L.reduce((p,q)=>p+q,0)/(L.length||1);
-let voice=Math.max(20,Math.min(50,Math.round(25+m*300)));
-let face=42;
-let total=face+voice;
-document.querySelector("#face").innerText=face;
-document.querySelector("#voice").innerText=voice;
-document.querySelector("#score").innerText=total;
-document.querySelector("#good").innerText=voice>=38?"声がしっかり届いています。":"正面を向いて挨拶できています。";
-document.querySelector("#advice").innerText=voice<35?"もう少し明るく、語尾まで声を届けよう。":"笑顔→目線→声の順を意識しよう。";
-document.querySelector("#result").style.display="block";
-s.innerText="チェック完了！";
-}
+let v=document.querySelector("#v"),b=document.querySelector("#b"),s=document.querySelector("#s"),st,a,x,d,L=[],P=[],run=0;
+navigator.mediaDevices.getUserMedia({video:{facingMode:"user"},audio:true}).then(q=>{st=q;v.srcObject=q;s.textContent="準備OK！"}).catch(()=>s.textContent="カメラ・マイクを許可してください");
+b.onclick=async()=>{if(!st)return;b.disabled=true;L=[];P=[];a=new AudioContext;x=a.createAnalyser();x.fftSize=512;d=new Uint8Array(512);a.createMediaStreamSource(st).connect(x);await a.resume();s.textContent="3…";setTimeout(()=>s.textContent="2…",700);setTimeout(()=>s.textContent="1…",1400);setTimeout(()=>{s.textContent="「こんにちは」";run=1;rec()},2100);setTimeout(done,5100)};
+function rec(){if(!run)return;x.getByteTimeDomainData(d);let z=0;for(let n of d)z+=((n-128)/128)**2;L.push(Math.sqrt(z/d.length));let c=document.createElement("canvas");c.width=40;c.height=30;let g=c.getContext("2d");g.drawImage(v,0,0,40,30);let p=g.getImageData(8,3,24,24).data,m=0;for(let i=0;i<p.length;i+=4)m+=(p[i]+p[i+1]+p[i+2])/3;P.push(m/(p.length/4));requestAnimationFrame(rec)}
+function C(n,a,b){return Math.max(a,Math.min(b,n))}
+function done(){run=0;b.disabled=false;
+let m=L.reduce((p,q)=>p+q,0)/(L.length||1),act=L.filter(q=>q>.035).length/(L.length||1),sd=Math.sqrt(L.reduce((p,q)=>p+(q-m)**2,0)/(L.length||1));
+let vol=C(Math.round((m-.025)*260),0,20),dur=C(Math.round((act-.18)*24),0,15),stable=C(Math.round(15-Math.abs(sd-.035)*180),0,15),voice=vol+dur+stable;
+let pm=P.reduce((p,q)=>p+q,0)/(P.length||1),dif=0;for(let i=1;i<P.length;i++)dif+=Math.abs(P[i]-P[i-1]);dif/=Math.max(1,P.length-1);
+let light=pm>70&&pm<205?18:pm>50&&pm<225?11:5,steady=C(Math.round(18-dif*2.2),4,18),natural=C(Math.round(dif*2.4),4,14),face=light+steady+natural;
+face=C(face,15,50);voice=C(voice,10,50);let t=face+voice;
+T.textContent=t;F.textContent=face;V.textContent=voice;
+D.innerHTML="📊 <b>内訳</b><br>表情の見えやすさ "+light+"/18<br>姿勢・画面内の安定 "+steady+"/18<br>自然な表情変化 "+natural+"/14<br>声量 "+vol+"/20<br>発声の持続 "+dur+"/15<br>声の安定 "+stable+"/15";
+A.innerHTML="🎯 <b>改善ポイント</b><br>"+(face<38?"顔を正面に向け、挨拶の前から明るい表情を作る。":voice<38?"最初の一音から声を出し、語尾まで声量を落とさない。":t<90?"表情と声は良好。『目線→笑顔→声』をさらに揃える。":"非常に安定した挨拶。毎回同じ品質で再現できるか確認。");
+r.style.display="block";s.textContent="チェック完了！";r.scrollIntoView({behavior:"smooth"})}
 </script></body></html>
